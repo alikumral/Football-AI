@@ -60,6 +60,16 @@
       </svg>
       Football AI
     </div>
+    <nav class="topbar-nav" aria-label="Primary navigation">
+      <button class="nav-link active" id="nav-home" data-view="home">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        Home
+      </button>
+      <button class="nav-link" id="nav-players" data-view="players">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+        Players
+      </button>
+    </nav>
     <div class="topbar-coach">
       <span id="topbar-coach-name" class="coach-badge"></span>
       <button id="btn-logout" class="btn btn-icon" title="Change account">
@@ -68,7 +78,56 @@
     </div>
   </header>
 
-  <!-- Body -->
+  <!-- Home -->
+  <section class="page-view active" id="view-home">
+    <div class="home-shell">
+      <div class="home-hero">
+        <div class="home-eyebrow">TEAM WORKSPACE</div>
+        <h1>Welcome, <span id="home-coach-name">Coach</span>!</h1>
+        <p id="home-team-name">Your roster workspace is ready.</p>
+        <div class="home-actions">
+          <button id="btn-home-add-player" class="btn btn-primary btn-auto">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            Add a player
+          </button>
+          <button id="btn-home-players" class="btn btn-secondary">View players</button>
+        </div>
+      </div>
+
+      <div class="home-grid">
+        <button class="overview-card overview-card-action" id="home-players-card">
+          <span class="overview-icon players-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+          </span>
+          <span class="overview-copy"><strong id="home-player-count">0</strong><small>Submitted players</small></span>
+          <span class="overview-arrow">→</span>
+        </button>
+        <button class="overview-card overview-card-action" id="home-drafts-card">
+          <span class="overview-icon drafts-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+          </span>
+          <span class="overview-copy"><strong id="home-draft-count">0</strong><small>Drafts in progress</small></span>
+          <span class="overview-arrow">→</span>
+        </button>
+      </div>
+
+      <div class="home-note">
+        <div class="note-mark">i</div>
+        <div><strong>Start simple.</strong><p>Add player profiles first. You can return anytime to complete measurements and skill evaluations.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Players -->
+  <section class="page-view" id="view-players">
+    <div class="players-page-head">
+      <div><span class="page-kicker">ROSTER</span><h1>Players</h1><p>Manage profiles, measurements and coach evaluations.</p></div>
+      <button id="btn-page-new-player" class="btn btn-primary btn-auto">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+        New player
+      </button>
+    </div>
+
   <div class="app-body">
 
     <!-- Sidebar -->
@@ -234,6 +293,7 @@
 
     </main><!-- end main-panel -->
   </div><!-- end app-body -->
+  </section><!-- end players view -->
 </div><!-- end screen-app -->
 
 <!-- Toast container -->

@@ -11,6 +11,7 @@ const state = {
   meta:           null,   // { positions, skillsByPosition, universalSkills }
   players:        [],     // submitted players
   drafts:         [],     // draft entries
+  activeView:     'home',
   activeTab:      'submitted',
   activePlayerId: null,   // currently open player/draft id
   activeDraft:    false,  // is the open item a draft?
@@ -47,6 +48,25 @@ function toast(msg, type = 'info', duration = 3000) {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+
+function showAppView(view) {
+  state.activeView = view;
+  document.querySelectorAll('.page-view').forEach(section => {
+    section.classList.toggle('active', section.id === `view-${view}`);
+  });
+  document.querySelectorAll('.nav-link').forEach(button => {
+    button.classList.toggle('active', button.dataset.view === view);
+    button.setAttribute('aria-current', button.dataset.view === view ? 'page' : 'false');
+  });
+}
+
+function updateDashboard() {
+  if (!state.coach) return;
+  document.getElementById('home-coach-name').textContent = state.coach.name || 'Coach';
+  document.getElementById('home-team-name').textContent = `${state.coach.team} roster workspace is ready.`;
+  document.getElementById('home-player-count').textContent = state.players.length;
+  document.getElementById('home-draft-count').textContent = state.drafts.length;
 }
 
 function setSaveDot(status) {
@@ -114,8 +134,36 @@ async function initApp() {
   document.getElementById('topbar-coach-name').textContent =
     `${state.coach.name} — ${state.coach.team}`;
 
+  updateDashboard();
+  showAppView('home');
   showScreen('screen-app');
 }
+
+document.querySelectorAll('.nav-link').forEach(button => {
+  button.addEventListener('click', () => showAppView(button.dataset.view));
+});
+
+document.getElementById('btn-home-players').addEventListener('click', () => {
+  switchTab('submitted');
+  showAppView('players');
+});
+
+document.getElementById('home-players-card').addEventListener('click', () => {
+  switchTab('submitted');
+  showAppView('players');
+});
+
+document.getElementById('home-drafts-card').addEventListener('click', () => {
+  switchTab('drafts');
+  showAppView('players');
+});
+
+['btn-home-add-player', 'btn-page-new-player'].forEach(id => {
+  document.getElementById(id).addEventListener('click', () => {
+    showAppView('players');
+    document.getElementById('btn-new-player').click();
+  });
+});
 
 // ============================================================
 // Position dropdowns
@@ -509,6 +557,7 @@ document.getElementById('player-form-wrap').addEventListener('input', () => {
 // Open a player or draft
 // ============================================================
 async function openPlayer(id, isDraft) {
+  showAppView('players');
   state.activePlayerId = id;
   state.activeDraft    = isDraft;
 
@@ -548,6 +597,7 @@ async function openPlayer(id, isDraft) {
 // New player
 // ============================================================
 document.getElementById('btn-new-player').addEventListener('click', async () => {
+  showAppView('players');
   const { id } = await apiFetch('POST', '/drafts/new');
   // Create minimal draft entry so it's reachable
   await apiFetch('PUT', `/drafts/${id}`, { id, profile: {}, coachName: state.coach.name, teamName: state.coach.team });
@@ -613,6 +663,7 @@ async function refreshLists() {
   state.drafts  = await apiFetch('GET', '/drafts');
   renderPlayerList();
   refreshDraftCount();
+  updateDashboard();
 }
 
 function refreshDraftCount() {
