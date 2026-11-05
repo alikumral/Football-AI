@@ -2,3 +2,5 @@ backend/node_modules/
 backend/data/*.json
 .DS_Store
 Thumbs.db
+.secrets
+.vscode
