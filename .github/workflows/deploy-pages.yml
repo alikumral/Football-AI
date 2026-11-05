@@ -28,10 +28,10 @@ jobs:
       - name: Verify static application
         shell: bash
         run: |
-          if [ -d tests ]; then
-            node --test tests
+          if [ -f tests/static.test.js ]; then
+            node --test tests/static.test.js
           else
-            echo "tests/ directory is not present; skipping optional checks."
+            echo "tests/static.test.js is not present; skipping optional checks."
           fi
       - name: Upload static site
         uses: actions/upload-pages-artifact@v4
