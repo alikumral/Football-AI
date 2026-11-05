@@ -202,9 +202,12 @@
               </select>
             </div>
             <div class="field">
-              <label for="f-secondaryPos">Secondary Position(s)</label>
-              <select id="f-secondaryPos" multiple size="4" aria-describedby="secondary-position-hint"></select>
-              <span class="field-hint" id="secondary-position-hint">Hold Ctrl/Cmd to select multiple.</span>
+              <div class="field-label-row">
+                <label id="secondary-position-label">Secondary Position(s)</label>
+                <button type="button" id="btn-clear-secondary" class="field-clear-btn">Clear all</button>
+              </div>
+              <div id="f-secondaryPos" class="position-picker" role="group" aria-labelledby="secondary-position-label"></div>
+              <span class="field-hint" id="secondary-position-hint">Select or remove positions with one click.</span>
             </div>
             <div class="field">
               <label>Position Archetype</label>
@@ -272,9 +275,9 @@
         <div class="form-section" id="section-skills">
           <div class="section-title" id="skills-section-title">Position Skills <span id="skills-pos-label" style="color:var(--accent-light);margin-left:6px;font-size:0.78rem"></span></div>
           <div id="skills-empty" style="color:var(--text-muted);font-size:0.875rem;padding:8px 0">
-            Select a primary position above to load skills.
+            Select a primary or secondary position above to load skills.
           </div>
-          <div class="skill-grid" id="skill-grid"></div>
+          <div class="position-skills" id="skill-grid"></div>
         </div>
 
         <!-- E: Universal Skills -->

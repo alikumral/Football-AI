@@ -18,6 +18,7 @@ const state = {
   dirty:          false,
   saveTimer:      null,
   saveTimeout:    null,
+  positionSkillCache: { values: {}, ne: {} },
 };
 
 // ============================================================
@@ -170,30 +171,82 @@ document.getElementById('home-drafts-card').addEventListener('click', () => {
 // ============================================================
 function populatePositionDropdowns() {
   const positions = state.meta.positions;
-  ['f-primaryPos', 'f-secondaryPos'].forEach(id => {
-    const sel = document.getElementById(id);
-    const isPrimary = id === 'f-primaryPos';
-    sel.innerHTML = isPrimary ? '<option value="">— Select —</option>' : '';
+  const primary = document.getElementById('f-primaryPos');
+  const secondary = document.getElementById('f-secondaryPos');
+  primary.innerHTML = '<option value="">— Select —</option>';
+  secondary.innerHTML = '';
 
-    let currentGroup = '';
-    positions.forEach(p => {
-      if (p.group !== currentGroup) {
-        const og = document.createElement('optgroup');
-        og.label = p.group;
-        sel.appendChild(og);
-        currentGroup = p.group;
-      }
-      const opt = document.createElement('option');
-      opt.value = p.code;
-      opt.textContent = `${p.code} — ${p.label}`;
-      sel.lastElementChild.appendChild(opt);
-    });
+  let currentGroup = '';
+  positions.forEach(position => {
+    if (position.group !== currentGroup) {
+      const group = document.createElement('optgroup');
+      group.label = position.group;
+      primary.appendChild(group);
+      currentGroup = position.group;
+    }
+    const option = document.createElement('option');
+    option.value = position.code;
+    option.textContent = `${position.code} — ${position.label}`;
+    primary.lastElementChild.appendChild(option);
+
+    const label = document.createElement('label');
+    label.className = 'position-option';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = position.code;
+    checkbox.setAttribute('aria-label', position.label);
+    const text = document.createElement('span');
+    text.textContent = `${position.code} · ${position.label}`;
+    text.title = position.label;
+    label.append(checkbox, text);
+    secondary.appendChild(label);
   });
 
-  document.getElementById('f-primaryPos').addEventListener('change', () => {
-    buildPositionSkills(document.getElementById('f-primaryPos').value);
+  primary.onchange = () => {
+    cacheCurrentPositionSkills();
+    updateSecondaryPositionAvailability();
+    rebuildSelectedPositionSkills();
     scheduleSave();
+  };
+  secondary.onchange = event => {
+    if (!event.target.matches('input[type="checkbox"]')) return;
+    cacheCurrentPositionSkills();
+    rebuildSelectedPositionSkills();
+    scheduleSave();
+  };
+  document.getElementById('btn-clear-secondary').onclick = () => {
+    cacheCurrentPositionSkills();
+    secondary.querySelectorAll('input[type="checkbox"]').forEach(checkbox => { checkbox.checked = false; });
+    rebuildSelectedPositionSkills();
+    scheduleSave();
+  };
+}
+
+function getSecondaryPositions() {
+  return Array.from(document.querySelectorAll('#f-secondaryPos input[type="checkbox"]:checked')).map(input => input.value);
+}
+
+function setSecondaryPositions(values) {
+  const selected = new Set(Array.isArray(values) ? values : (values ? [values] : []));
+  document.querySelectorAll('#f-secondaryPos input[type="checkbox"]').forEach(input => {
+    input.checked = selected.has(input.value);
   });
+  updateSecondaryPositionAvailability();
+}
+
+function updateSecondaryPositionAvailability() {
+  const primary = document.getElementById('f-primaryPos').value;
+  document.querySelectorAll('#f-secondaryPos input[type="checkbox"]').forEach(input => {
+    const isPrimary = input.value === primary;
+    if (isPrimary) input.checked = false;
+    input.disabled = isPrimary;
+    input.closest('.position-option').classList.toggle('is-disabled', isPrimary);
+  });
+}
+
+function selectedPositionCodes() {
+  const primary = document.getElementById('f-primaryPos').value;
+  return [primary, ...getSecondaryPositions()].filter((code, index, all) => code && all.indexOf(code) === index);
 }
 
 // ============================================================
@@ -252,25 +305,63 @@ function buildSkillSlider(skillName, value, isNE, prefix) {
   return wrapper;
 }
 
-function buildPositionSkills(posCode) {
-  const grid = document.getElementById('skill-grid');
+function buildPositionSkills(positionCodes, valuesByPosition = {}, neByPosition = {}) {
+  const container = document.getElementById('skill-grid');
   const empty = document.getElementById('skills-empty');
   const label = document.getElementById('skills-pos-label');
+  const codes = Array.isArray(positionCodes) ? positionCodes : (positionCodes ? [positionCodes] : []);
+  container.innerHTML = '';
 
-  grid.innerHTML = '';
-
-  if (!posCode) {
+  if (!codes.length) {
     empty.style.display = '';
     label.textContent = '';
     return;
   }
   empty.style.display = 'none';
-  label.textContent = posCode;
+  label.textContent = codes.join(' + ');
 
-  const skills = state.meta.skillsByPosition[posCode] || [];
-  skills.forEach(skill => {
-    grid.appendChild(buildSkillSlider(skill, 50, true, 'position'));
+  codes.forEach(code => {
+    const position = state.meta.positions.find(item => item.code === code);
+    const group = document.createElement('div');
+    group.className = 'position-skill-group';
+    group.dataset.position = code;
+    const heading = document.createElement('div');
+    heading.className = 'position-skill-heading';
+    heading.innerHTML = `<span class="position-code-badge">${code}</span><strong>${position?.label || code}</strong><span>${(state.meta.skillsByPosition[code] || []).length} skills</span>`;
+    const grid = document.createElement('div');
+    grid.className = 'skill-grid';
+    const neSet = new Set(neByPosition[code] || []);
+    (state.meta.skillsByPosition[code] || []).forEach(skill => {
+      const key = skillKey(skill);
+      const value = valuesByPosition[code]?.[key];
+      const hasValue = value !== null && value !== undefined;
+      grid.appendChild(buildSkillSlider(skill, hasValue ? value : 50, neSet.has(key) || !hasValue, `position-${code}`));
+    });
+    group.append(heading, grid);
+    container.appendChild(group);
   });
+}
+
+function readPositionSkills() {
+  const values = {};
+  const ne = {};
+  document.querySelectorAll('#skill-grid .position-skill-group').forEach(group => {
+    const code = group.dataset.position;
+    const result = readSkillsFromElement(group);
+    values[code] = result.values;
+    ne[code] = result.ne;
+  });
+  return { values, ne };
+}
+
+function cacheCurrentPositionSkills() {
+  const current = readPositionSkills();
+  Object.assign(state.positionSkillCache.values, current.values);
+  Object.assign(state.positionSkillCache.ne, current.ne);
+}
+
+function rebuildSelectedPositionSkills() {
+  buildPositionSkills(selectedPositionCodes(), state.positionSkillCache.values, state.positionSkillCache.ne);
 }
 
 function buildUniversalSkills(values, neSet) {
@@ -308,8 +399,7 @@ function getFieldVal(id) {
   return el.type === 'number' ? (el.value !== '' ? parseFloat(el.value) : null) : el.value.trim();
 }
 
-function readSkillsFromGrid(gridId) {
-  const grid = document.getElementById(gridId);
+function readSkillsFromElement(grid) {
   const values = {};
   const ne = [];
   grid.querySelectorAll('.skill-slider').forEach(slider => {
@@ -322,9 +412,14 @@ function readSkillsFromGrid(gridId) {
   return { values, ne };
 }
 
+function readSkillsFromGrid(gridId) {
+  return readSkillsFromElement(document.getElementById(gridId));
+}
+
 function readForm() {
-  const { values: skillVals, ne: skillNE } = readSkillsFromGrid('skill-grid');
+  const positional = readPositionSkills();
   const { values: uniVals,   ne: uniNE   } = readSkillsFromGrid('universal-skill-grid');
+  const primaryPos = getFieldVal('f-primaryPos');
 
   return {
     id: state.activePlayerId,
@@ -338,8 +433,8 @@ function readForm() {
       height:       getFieldVal('f-height'),
       weight:       getFieldVal('f-weight'),
       jerseyNumber: getFieldVal('f-jersey'),
-      primaryPos:   getFieldVal('f-primaryPos'),
-      secondaryPos: Array.from(document.getElementById('f-secondaryPos').selectedOptions).map(option => option.value),
+      primaryPos,
+      secondaryPos: getSecondaryPositions(),
       archetype:    getFieldVal('f-archetype'),
       domHand:      getFieldVal('f-domHand'),
       domFoot:      getFieldVal('f-domFoot'),
@@ -363,8 +458,10 @@ function readForm() {
       bench:         getFieldVal('m-bench'),
       bench1rm:      getFieldVal('m-bench1rm'),
     },
-    skills:         skillVals,
-    skillsNE:       skillNE,
+    skills:         positional.values[primaryPos] || {},
+    skillsNE:       positional.ne[primaryPos] || [],
+    positionSkills: positional.values,
+    positionSkillsNE: positional.ne,
     universalSkills: uniVals,
     universalSkillsNE: uniNE,
     customAttributes: readCustomAttributes(),
@@ -378,11 +475,6 @@ function readForm() {
 function setFieldVal(id, val) {
   const el = document.getElementById(id);
   if (el && val !== null && val !== undefined) el.value = val;
-}
-
-function setMultiSelect(id, values) {
-  const selected = new Set(Array.isArray(values) ? values : (values ? [values] : []));
-  Array.from(document.getElementById(id).options).forEach(option => { option.selected = selected.has(option.value); });
 }
 
 function addCustomAttribute(attribute = {}) {
@@ -445,7 +537,7 @@ function populateForm(data) {
   setFieldVal('f-weight',      p.weight);
   setFieldVal('f-jersey',      p.jerseyNumber);
   setFieldVal('f-primaryPos',  p.primaryPos);
-  setMultiSelect('f-secondaryPos', p.secondaryPos);
+  setSecondaryPositions(p.secondaryPos);
   setFieldVal('f-archetype',   p.archetype);
   setFieldVal('f-domHand',     p.domHand);
   setFieldVal('f-domFoot',     p.domFoot);
@@ -472,35 +564,18 @@ function populateForm(data) {
   setFieldVal('m-bench',         m.bench);
   setFieldVal('m-bench1rm',      m.bench1rm);
 
-  // Build position skills then populate values
-  const pos = p.primaryPos || '';
-  buildPositionSkills(pos);
-  if (pos && data.skills) {
-    const neSet = new Set(data.skillsNE || []);
-    document.getElementById('skill-grid').querySelectorAll('.skill-slider').forEach(slider => {
-      const key = skillKey(slider.dataset.skill);
-      const val = data.skills[key];
-      const ne  = neSet.has(key);
-      const item = slider.closest('.skill-item');
-      const neChk = item.querySelector('.skill-ne input');
-      const badge = item.querySelector('.skill-value-badge');
-      if (ne) {
-        if (neChk) neChk.checked = true;
-        slider.disabled = true;
-        slider.style.opacity = '0.3';
-        if (badge) { badge.textContent = 'N/E'; badge.style.opacity = '0.4'; }
-      } else if (val !== null && val !== undefined) {
-        if (neChk) neChk.checked = false;
-        slider.disabled = false;
-        slider.style.opacity = '1';
-        slider.style.pointerEvents = '';
-        slider.value = val;
-        slider.style.setProperty('--pct', val + '%');
-        const b = getBand(val);
-        if (badge) { badge.textContent = `${val} — ${b.label}`; badge.style.color = b.color; }
-      }
-    });
-  }
+  // New records store a skill set per position. Legacy records are mapped to
+  // the primary position so existing ratings remain editable.
+  const primary = p.primaryPos || '';
+  const positionValues = { ...(data.positionSkills || {}) };
+  const positionNE = { ...(data.positionSkillsNE || {}) };
+  if (primary && !positionValues[primary] && data.skills) positionValues[primary] = data.skills;
+  if (primary && !positionNE[primary] && data.skillsNE) positionNE[primary] = data.skillsNE;
+  state.positionSkillCache = {
+    values: structuredClone(positionValues),
+    ne: structuredClone(positionNE),
+  };
+  buildPositionSkills(selectedPositionCodes(), state.positionSkillCache.values, state.positionSkillCache.ne);
 
   // Universal skills
   const uneSet = new Set(data.universalSkillsNE || []);
@@ -509,13 +584,15 @@ function populateForm(data) {
 
 function clearForm() {
   ['f-firstName','f-lastName','f-dob','f-nationality','f-height','f-weight',
-   'f-jersey','f-primaryPos','f-secondaryPos','f-archetype','f-domHand','f-domFoot',
+   'f-jersey','f-primaryPos','f-archetype','f-domHand','f-domFoot',
    'f-experience','f-rosterRole','f-availability','f-notes',
    'm-wingspan','m-armLength','m-handLength','m-handSpan','m-standingReach',
    'm-forty','m-tenSplit','m-twentySplit','m-shuttle','m-threeCone',
    'm-vertJump','m-broadJump','m-bench','m-bench1rm'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
+  setSecondaryPositions([]);
+  state.positionSkillCache = { values: {}, ne: {} };
   document.getElementById('skill-grid').innerHTML = '';
   document.getElementById('skills-empty').style.display = '';
   document.getElementById('skills-pos-label').textContent = '';

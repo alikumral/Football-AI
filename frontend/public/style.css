@@ -109,6 +109,15 @@ input[type='number'] { -moz-appearance: textfield; }
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button { opacity: 0; }
 .field-hint { display: block; margin-top: 6px; color: var(--text-muted); font-size: 0.72rem; }
+.field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.field-label-row label { margin-bottom: 7px; }
+.field-clear-btn { margin-bottom: 7px; padding: 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; font-size: 0.7rem; font-weight: 600; }
+.field-clear-btn:hover { color: var(--accent-strong); text-decoration: underline; }
+.position-picker { min-height: 108px; max-height: 148px; padding: 7px; overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--input); }
+.position-option { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 6px 9px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text-secondary); cursor: pointer; font-size: 0.72rem; font-weight: 600; transition: background var(--transition), border-color var(--transition), color var(--transition); }
+.position-option:hover { border-color: var(--border-strong); color: var(--text); }
+.position-option:has(input:checked) { border-color: #b9d0c3; background: var(--accent-soft); color: var(--accent-strong); }
+.position-option input { width: 14px; height: 14px; min-height: auto; padding: 0; appearance: auto; -webkit-appearance: checkbox; accent-color: var(--accent); }
 .inline-value { margin-left: 4px; color: var(--accent); font-weight: 500; }
 .notes-field { margin-top: 18px; margin-bottom: 0; }
 .field-full { grid-column: 1 / -1; }
@@ -274,6 +283,13 @@ input[type='number']::-webkit-outer-spin-button { opacity: 0; }
 .custom-attribute-row { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(180px, 2fr) auto; gap: 10px; align-items: center; }
 .custom-attribute-row input { min-width: 0; }
 .skill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+.position-skills { display: flex; flex-direction: column; gap: 22px; }
+.position-skill-group { padding-top: 2px; }
+.position-skill-group + .position-skill-group { padding-top: 22px; border-top: 1px solid var(--border); }
+.position-skill-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.position-code-badge { min-width: 38px; padding: 4px 8px; border-radius: 7px; background: var(--accent-soft); color: var(--accent-strong); font-size: 0.72rem; font-weight: 700; text-align: center; }
+.position-skill-heading strong { font-size: 0.86rem; }
+.position-skill-heading span:last-child { color: var(--text-muted); font-size: 0.72rem; }
 .skill-item { display: flex; flex-direction: column; gap: 7px; }
 .skill-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .skill-name { color: var(--text-secondary); font-size: 0.78rem; font-weight: 500; }
@@ -281,7 +297,7 @@ input[type='number']::-webkit-outer-spin-button { opacity: 0; }
 .skill-slider { width: 100%; height: 5px; padding: 0; appearance: none; border: 0; border-radius: 4px; outline: none; background: linear-gradient(90deg, var(--accent) var(--pct, 0%), #e4eae6 var(--pct, 0%)); cursor: pointer; }
 .skill-slider::-webkit-slider-thumb { width: 16px; height: 16px; appearance: none; border: 3px solid #fff; border-radius: 50%; background: var(--accent); box-shadow: 0 1px 5px rgba(43, 68, 57, 0.28); }
 .skill-ne { display: flex; align-items: center; gap: 5px; color: var(--text-muted); cursor: pointer; font-size: 0.68rem; user-select: none; }
-.skill-ne input { width: auto; min-height: auto; accent-color: var(--accent); }
+.skill-ne input { width: 16px; height: 16px; min-height: auto; padding: 0; appearance: auto; -webkit-appearance: checkbox; accent-color: var(--accent); }
 .draft-banner { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 10px 13px; border: 1px solid #ead9bb; border-radius: 10px; background: var(--gold-soft); color: #8e692f; font-size: 0.8rem; }
 .autosave-bar { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 10px 24px; border-top: 1px solid var(--border); background: #fff; color: var(--text-muted); font-size: 0.74rem; }
 .save-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
